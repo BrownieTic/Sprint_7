@@ -1,9 +1,9 @@
 import pytest
-import requests
 
-from urls import API as api
-from data import RandomData
+from randomizer import RandomData
 from data import UserData as user_data
+from api.courier_api import CourierAPI
+from api.order_api import OrderAPI
 
 
 @pytest.fixture(scope="function")
@@ -24,8 +24,9 @@ def create_random_courier_data():
 
 @pytest.fixture(scope="function")
 def register_courier_and_delete(create_random_courier_data):
+    request_courier = CourierAPI()
     # отправляем запрос на регистрацию курьера
-    requests.post(api.creating_courier_api, data=create_random_courier_data)
+    request_courier.create_courier_request(create_random_courier_data)
 
     payload = {
         "login": create_random_courier_data["login"],
@@ -35,18 +36,19 @@ def register_courier_and_delete(create_random_courier_data):
 
     if "id" in payload:
         courier_id = payload["id"]
-        requests.delete(f'{api.delete_courier_api}{courier_id}')
+        request_courier.delet_courier_request(courier_id)
 
 @pytest.fixture(scope="function")
 def get_id_courier_and_delete(create_random_courier_data):
     yield create_random_courier_data
+    request_courier = CourierAPI()
     payload = {
         "login": create_random_courier_data["login"],
         "password": create_random_courier_data["password"]
     }
-    response = requests.post(api.id_courier_api, data=payload)
+    response = request_courier.login_courier_request(payload)
     courier_id = response.json()["id"]
-    requests.delete(f'{api.delete_courier_api}{courier_id}')
+    request_courier.delet_courier_request(courier_id)
 
 @pytest.fixture(scope="function")
 def user_data_copy():
@@ -55,33 +57,32 @@ def user_data_copy():
 
 @pytest.fixture(scope="function")
 def register_courier_and_order(create_random_courier_data, user_data_copy):
-    create_courier_response = requests.post(api.creating_courier_api, json=create_random_courier_data)
-    assert create_courier_response.status_code == 201
-    response_courier = requests.post(api.id_courier_api, json={
+    request_order = OrderAPI()
+    request_courier = CourierAPI()
+    create_courier_response = request_courier.create_courier_request(create_random_courier_data)
+
+    response_courier = request_courier.login_courier_request({
                 "login": create_random_courier_data["login"],
                 "password": create_random_courier_data["password"],
             })
-    assert response_courier.status_code == 200
 
     # Получаем id курьера
     courier_id = response_courier.json()["id"]
     # Создаём заказ
-    create_order_response = requests.post(api.order_api, json=user_data_copy)
-    assert create_order_response.status_code == 201
+    create_order_response = request_order.create_order_request(user_data_copy)
+
     track = create_order_response.json()["track"]
     # Получаем заказ по track и узнаём его id
-    get_order_response = requests.get(f'{api.order_api}/track', 
-                                      params={"t": track})
-    assert get_order_response.status_code == 200
+    get_order_response = request_order.get_order_request(track)
+    
     order = get_order_response.json()["order"]
     order_id = order["id"]
     # Принимаем заказ курьером
-    requests.put(f'{api.order_api}/accept/{order_id}', 
-                 params={"courierId": courier_id})
+    request_order.accept_order_request(order_id, courier_id)
     yield {
             "courier_id": courier_id,
             "order_id": order_id,
             "order_data": user_data_copy,
         }
 
-    requests.delete(f'{api.delete_courier_api}{courier_id}')
+    request_courier.delet_courier_request(courier_id)

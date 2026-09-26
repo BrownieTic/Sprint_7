@@ -1,14 +1,3 @@
-import random
-import string
-
-# метод регистрации нового курьера возвращает список из логина и пароля
-# если регистрация не удалась, возвращает пустой список
-class RandomData():
-    # метод генерирует строку, состоящую только из букв нижнего регистра, в качестве параметра передаём длину строки
-    def generate_random_string(self, length):
-        letters = string.ascii_lowercase
-        random_string = ''.join(random.choice(letters) for i in range(length))
-        return random_string
 
 class UserData:
     USER = {

@@ -1,13 +1,13 @@
-import requests
 import allure
 import json
 import pytest
 
-from urls import API as api
 from data import OrderParametrs as parametrs
+from api.order_api import OrderAPI
 
 @allure.feature("Заказы")
 class TestOrderAPI:
+    request = OrderAPI()
     @allure.story("Создание заказа")
     @allure.title("Создание заказа самоката с цветом: {color}")
     @pytest.mark.parametrize('color',
@@ -16,10 +16,10 @@ class TestOrderAPI:
         [],
         None]
         )
-    def test_creat_api_all_fields_success(self, color, user_data_copy):
+    def test_create_order_api_all_fields_success(self, color, user_data_copy):
         user_data_copy["color"] = color
         with allure.step("Создать заказ"):
-            response = requests.post(api.order_api, json=user_data_copy)
+            response = self.request.create_order_request(user_data_copy)
 
         with allure.step("Проверить успешное создание заказа"):
             assert response.status_code == 201
@@ -27,6 +27,8 @@ class TestOrderAPI:
 
 @allure.feature("Получение списка заказов")
 class TestOrderListAPI:
+    request = OrderAPI()
+
     @allure.story("Получение списка заказов с параметрами и проверка общего вида ответа")
     @allure.title("Получение списка заказов: параметр {parametr}")
     @pytest.mark.parametrize('parametr',
@@ -40,10 +42,9 @@ class TestOrderListAPI:
         )
     def test_get_list_order_one_parametr_code_200_and_correct_format(self, parametr):
         with allure.step(f"Отправить GET-запрос с параметром: {parametr or 'без параметров'}"):
-            response = requests.get(api.order_api, params=parametr)
-        with allure.step("Проверить статус-код ответа"):
+            response = self.request.get_list_order_request(parametr)
+        with allure.step("Проверить статус-код ответа и основные поля"):
             assert response.status_code == 200
-        with allure.step("Проверить наличие основных полей ответа"):
             assert 'orders' in response.json()
             assert 'pageInfo' in response.json()
         with allure.step("Проверить формат pageInfo"):
@@ -62,11 +63,10 @@ class TestOrderListAPI:
                 "nearestStation": json.dumps([metro_station])
         }
         with allure.step("Получить список заказов по courierId и nearestStation"):
-            response = requests.get(api.order_api, params=params)
-        with allure.step("Проверить успешный ответ"):
-            assert response.status_code == 200
-        with allure.step("Проверить данные заказа"):
+            response = self.request.get_list_order_request(params)
+        with allure.step("Проверить код ответа и данные заказа"):
             order = response.json()['orders'][0]
+            assert response.status_code == 200
             assert order['courierId'] == test_data["courier_id"]
             assert order['metroStation'] == metro_station
 
@@ -83,11 +83,9 @@ class TestOrderListAPI:
                 string: param
         }
         with allure.step(f"Получить список заказов с courierId и {string}={param}"):
-            response = requests.get(api.order_api, params=params)
-        with allure.step("Проверить успешный ответ"):
+            response = self.request.get_list_order_request(params)
+        with allure.step("Проверить код ответа, courierId и параметр из pageInfo"):
             assert response.status_code == 200
-
-        with allure.step("Проверить courierId и параметр из pageInfo"):
             order = response.json()['orders'][0]
             page_info = response.json()["pageInfo"]
             assert order['courierId'] == test_data["courier_id"]
@@ -107,10 +105,9 @@ class TestOrderListAPI:
                 string : param
         }
         with allure.step(f"Получить список заказов с nearestStation и {string}={param}"):
-            response = requests.get(api.order_api, params=params)
-        with allure.step("Проверить успешный ответ"):
+            response = self.request.get_list_order_request(params)
+        with allure.step("Проверить код ответа,nearestStation и параметр из pageInfo"):
             assert response.status_code == 200
-        with allure.step("Проверить nearestStation и параметр из pageInfo"):
             order = response.json()['orders'][0]
             page_info = response.json()["pageInfo"]
             assert order['metroStation'] == metro_station
@@ -123,10 +120,9 @@ class TestOrderListAPI:
                 "page": parametrs.page
         }
         with allure.step("Получить список заказов с limit и page"):
-            response = requests.get(api.order_api, params=params)
-        with allure.step("Проверить успешный ответ"):
+            response = self.request.get_list_order_request(params)
+        with allure.step("Проверить код ответа и значения pageInfo"):
             assert response.status_code == 200
-        with allure.step("Проверить значения pageInfo"):
             page_info = response.json()["pageInfo"]
             assert page_info['limit'] == parametrs.limit
             assert page_info['page'] == parametrs.page
