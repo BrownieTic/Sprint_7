@@ -18,8 +18,7 @@ class TestOrderAPI:
         )
     def test_create_order_api_all_fields_success(self, color, user_data_copy):
         user_data_copy["color"] = color
-        with allure.step("Создать заказ"):
-            response = self.request.create_order_request(user_data_copy)
+        response = self.request.create_order_request(user_data_copy)
 
         with allure.step("Проверить успешное создание заказа"):
             assert response.status_code == 201
@@ -41,8 +40,7 @@ class TestOrderListAPI:
         ]
         )
     def test_get_list_order_one_parametr_code_200_and_correct_format(self, parametr):
-        with allure.step(f"Отправить GET-запрос с параметром: {parametr or 'без параметров'}"):
-            response = self.request.get_list_order_request(parametr)
+        response = self.request.get_list_order_request(parametr)
         with allure.step("Проверить статус-код ответа и основные поля"):
             assert response.status_code == 200
             assert 'orders' in response.json()

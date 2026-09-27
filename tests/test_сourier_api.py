@@ -9,9 +9,7 @@ class TestCourierAPI:
     @allure.story("Создание курьера")
     @allure.title("Успешное создание курьера")
     def test_creat_courier_all_fields_success(self, get_id_courier_and_delete):
-        # request = OrderAPI()
-        with allure.step("Отправка запроса на создание курьера"):
-            response = self.request.create_courier_request(get_id_courier_and_delete)
+        response = self.request.create_courier_request(get_id_courier_and_delete)
         with allure.step("Проверка успешного создания курьера"):
             assert response.status_code == 201
             assert response.json() == {"ok": True}
@@ -19,10 +17,8 @@ class TestCourierAPI:
     @allure.story("Создание курьера")
     @allure.title("Создание курьера с уже занятым логином")
     def test_creat_twin_couriers_all_field_get_error(self, get_id_courier_and_delete):
-        # request = OrderAPI()
-        with allure.step("Отправка запросов на создание курьера"):
-            response = self.request.create_courier_request(get_id_courier_and_delete)
-            response = self.request.create_courier_request(get_id_courier_and_delete)
+        response = self.request.create_courier_request(get_id_courier_and_delete)
+        response = self.request.create_courier_request(get_id_courier_and_delete)
         with allure.step("Проверка ошибки занятого логина"):
             assert response.status_code == 409
             assert response.json() == {"message": "Этот логин уже используется"}
@@ -56,9 +52,8 @@ class TestLoginCourierAPI:
     @allure.story("Успешная авторизация")
     @allure.title("Авторизация курьера с корректными данными")
     def test_login_courier_all_fields_success(self, register_courier_and_delete):
-        with allure.step("Отправка запроса на авторизацию курьера"):
-            response = self.request.login_courier_request(register_courier_and_delete)
-            response_json = response.json()["id"]
+        response = self.request.login_courier_request(register_courier_and_delete)
+        response_json = response.json()["id"]
         with allure.step("Проверка успешной авторизации курьера"):
             assert response.status_code == 200
             assert "id" in response.json()

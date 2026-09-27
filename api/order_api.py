@@ -1,14 +1,17 @@
 import requests
+import allure
 
 from urls import API as api
 
 class OrderAPI:
     def create_order_request(self, data):
-        response = requests.post(api.order_api, json=data)
+        with allure.step("Создать заказ"):
+            response = requests.post(api.order_api, json=data)
         return response
 
     def get_list_order_request(self, parametr):
-        response = requests.get(api.order_api, params=parametr)
+        with allure.step(f"Отправить GET-запрос с параметром: {parametr or 'без параметров'}"):
+            response = requests.get(api.order_api, params=parametr)
         return response
     
     def get_order_request(self, track):
